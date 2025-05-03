@@ -24,7 +24,10 @@ wheels/
 venv/
 env/
 ENV/
+# Environment variables
 .env
+.env.*
+!.env.example
 .venv
 env.bak/
 venv.bak/
