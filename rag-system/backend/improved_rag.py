@@ -1,3 +1,4 @@
+# improved_rag.py  ─────────────────────────────────────────────────────────────
 """
 Improved Retrieval‑Augmented Generation (RAG) chain that:
   • Uses smaller, strategic text chunks for more precise retrieval
@@ -34,7 +35,7 @@ load_dotenv()
 # ────────────────────────────────────────────────────────────────────────────
 #  Improved RAG chain builder
 # ────────────────────────────────────────────────────────────────────────────
-def get_rag_chain(document_path="essay.txt"):
+def get_improved_rag_chain():
     """Return an improved ConversationalRetrievalChain with better chunking and retrieval."""
     api_key = os.getenv("MISTRAL_API_KEY")
     if not api_key:
@@ -43,16 +44,7 @@ def get_rag_chain(document_path="essay.txt"):
         )
 
     # 1️⃣  Load document and split into strategic chunks
-    try:
-        if not os.path.exists(document_path):
-            logger.error(f"❌ {document_path} file not found. Please create this file before continuing.")
-            raise FileNotFoundError(f"{document_path} file not found in the current directory")
-            
-        docs = TextLoader(document_path).load()
-        logger.info(f"✅ Successfully loaded {document_path}")
-    except Exception as e:
-        logger.error(f"❌ Error loading document: {str(e)}")
-        raise ValueError(f"Failed to load {document_path}: {str(e)}")
+    docs = TextLoader("essay.txt").load()
     
     # Use smaller chunks with some overlap for better context
     text_splitter = RecursiveCharacterTextSplitter(
@@ -111,7 +103,7 @@ def get_rag_chain(document_path="essay.txt"):
 
     # 5️⃣  Improved prompt with "not found" handling
     qa_prompt = ChatPromptTemplate.from_template(
-        """Answer the following question based on the provided context AND the chat history.
+        """Answer the following question based only on the provided context.
         
 <context>
 {context}
@@ -122,11 +114,7 @@ Chat History:
 
 Question: {question}
 
-Guidelines:
-1. If the answer is IN THE CONTEXT, provide it based on that information.
-2. If the answer is IN THE CHAT HISTORY, use that information to respond.
-3. If the answer cannot be found in either the context or chat history, respond with "I don't have information about that in my knowledge base."
-4. NEVER make up information that isn't in the context or chat history.
+If the answer cannot be found in the context, respond with "I don't have information about that in my knowledge base" instead of making up information.
 """
     )
 

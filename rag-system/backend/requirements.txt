@@ -5,3 +5,4 @@ langchain-community
 langchain-mistralai
 faiss-cpu
 python-dotenv
+python-multipart
