@@ -7,9 +7,17 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains import create_retrieval_chain
 import os
+from dotenv import load_dotenv
+import time
+from typing import Optional
+
+# Load environment variables from .env file
+load_dotenv()
 
 def get_rag_chain():
     api_key = os.getenv("MISTRAL_API_KEY")
+    if not api_key:
+        raise ValueError("MISTRAL_API_KEY environment variable is not set. Please create a .env file with your MistralAI API key.")
 
     loader = TextLoader("essay.txt")
     docs = loader.load()
@@ -28,3 +36,18 @@ def get_rag_chain():
     document_chain = create_stuff_documents_chain(model, prompt)
 
     return create_retrieval_chain(retriever, document_chain)
+
+def invoke_with_retry(chain, input_data: dict, max_retries: int = 3) -> Optional[dict]:
+    """Invoke the chain with retry logic for rate limiting."""
+    for attempt in range(max_retries):
+        try:
+            return chain.invoke(input_data)
+        except Exception as e:
+            if "rate limit" in str(e).lower():
+                if attempt < max_retries - 1:
+                    # Exponential backoff: 2^attempt seconds
+                    wait_time = 2 ** attempt
+                    time.sleep(wait_time)
+                    continue
+            raise
+    return None
