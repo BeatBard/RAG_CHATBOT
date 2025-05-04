@@ -16,7 +16,7 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend:/app
-    environment:
-      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+    working_dir: /app
+    command: npm run dev
     depends_on:
       - backend
