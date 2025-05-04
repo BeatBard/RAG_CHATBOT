@@ -23,11 +23,37 @@ A Retrieval-Augmented Generation (RAG) chatbot system with conversation memory, 
 
 ### Prerequisites
 
+- Docker and Docker Compose (for Docker deployment)
+- OR
 - Python 3.9+ for the backend
 - Node.js 18+ for the frontend
 - Mistral API key
 
 ### Setup and Installation
+
+#### Option 1: Using Docker (Recommended)
+
+1. Clone the repository
+
+2. Create a `.env` file in the root directory:
+   ```bash
+   cd rag-system
+   echo "MISTRAL_API_KEY=your-api-key-here" > .env
+   ```
+
+3. Build and run the Docker containers:
+   ```bash
+   docker-compose up --build
+   ```
+
+4. Access the application at `http://localhost:3000`
+
+5. To stop the containers:
+   ```bash
+   docker-compose down
+   ```
+
+#### Option 2: Manual Setup
 
 1. Clone the repository
 
@@ -57,6 +83,19 @@ A Retrieval-Augmented Generation (RAG) chatbot system with conversation memory, 
    ```
 
 5. Access the application at `http://localhost:3000`
+
+## Docker Configuration
+
+The system uses Docker Compose with two services:
+
+- **Backend**: FastAPI server running on port 8000
+- **Frontend**: Next.js application with production build running on port 3000
+
+The Docker setup includes:
+- Volume mounting for the backend to enable real-time file changes
+- Environment variable configuration
+- Proper container linking
+- Production-ready frontend build
 
 ## Document Management
 
