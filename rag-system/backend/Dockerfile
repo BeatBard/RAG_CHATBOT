@@ -7,6 +7,10 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
+    python3-dev \
+    build-essential \
+    libpoppler-cpp-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -19,8 +23,12 @@ RUN mkdir -p /app/uploads /app/vectorstore
 # Copy the rest of the code
 COPY . .
 
+# Copy the entrypoint script and make it executable
+COPY entrypoint.sh .
+RUN chmod +x /app/entrypoint.sh
+
 # Expose FastAPI port
 EXPOSE 8000
 
-# Run the app with hot reload for development
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Run the entrypoint script
+CMD ["/app/entrypoint.sh"]

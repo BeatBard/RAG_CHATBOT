@@ -122,10 +122,10 @@ async def upload_document(
         )
     
     # Validate file type
-    if not file.filename.endswith((".txt", ".md")):
+    if not file.filename.endswith((".txt", ".md", ".pdf")):
         raise HTTPException(
             status_code=400,
-            detail="Only .txt and .md files are supported"
+            detail="Only .txt, .md, and .pdf files are supported"
         )
     
     # Save the uploaded file with metadata
@@ -182,7 +182,7 @@ async def list_documents():
     documents = []
     
     for filename in os.listdir(UPLOAD_DIR):
-        if filename.endswith((".txt", ".md")):
+        if filename.endswith((".txt", ".md", ".pdf")):
             file_path = UPLOAD_DIR / filename
             size = os.path.getsize(file_path)
             is_active = (filename == active_document)

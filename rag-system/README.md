@@ -2,14 +2,30 @@
 
 A modern, intelligent Retrieval-Augmented Generation (RAG) chatbot system with conversation memory, document management, and advanced text processing capabilities.
 
-![RAG Chatbot Demo](https://i.imgur.com/example.png)
+## 🎬 Demo Video
+
+To add your recorded demo video:
+1. Upload your video file to the repository or a video hosting service like YouTube
+2. If uploading to the repository, place it in a `demo` folder
+3. Replace the placeholder link below with the actual link to your video
+
+```
+![RAG Chatbot Demo](demo/your-video-filename.mp4)
+```
+
+or for YouTube:
+
+```
+[![RAG Chatbot Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+```
 
 ## ✨ Features
 
 ### Core Features
 - **Smart Document Processing**
   - Intelligent text chunking (400 characters with 50-character overlap)
-  - Support for multiple document formats (.txt, .md)
+  - Support for multiple document formats (.txt, .md, .pdf)
+  - PDF processing with per-page extraction
   - Automatic document switching with memory reset
   - Document management interface
 
@@ -17,21 +33,24 @@ A modern, intelligent Retrieval-Augmented Generation (RAG) chatbot system with c
   - Persistent conversation memory
   - Context-aware responses
   - Conversation history tracking
-  - Memory summary generation
+  - Memory summary generation with buffer-based summarization
   - Easy memory reset functionality
+  - Force summary generation capability
 
 - **Enhanced Retrieval System**
   - Optimized similarity search
   - Top-3 most relevant chunk retrieval
   - Context-aware answer generation
   - Off-topic question detection
+  - Direct questioning without rephrasing
 
 ### Technical Features
 - **Robust Error Handling**
-  - API rate limit management
+  - API rate limit management with exponential backoff retry
   - Graceful error recovery
   - User-friendly error messages
   - Automatic retry mechanisms
+  - Detailed logging
 
 - **Modern UI/UX**
   - Responsive design
@@ -39,6 +58,7 @@ A modern, intelligent Retrieval-Augmented Generation (RAG) chatbot system with c
   - Intuitive document management
   - Clean and modern interface
   - Dark/light mode support
+  - Debug panel for system insights
 
 ## 🏗️ Architecture
 
@@ -47,12 +67,52 @@ A modern, intelligent Retrieval-Augmented Generation (RAG) chatbot system with c
 - **Styling**: Tailwind CSS
 - **State Management**: React Hooks
 - **API Integration**: Fetch API with error handling
+- **Components**:
+  - Chat interface with message history
+  - Document management sidebar
+  - Debug panel with system insights
+  - File upload interface
+  - Responsive layout system
 
 ### Backend
 - **Framework**: FastAPI
 - **RAG Implementation**: LangChain
-- **Language Model**: Mistral AI
+- **Language Model**: Mistral AI (Large & Embed models)
 - **Vector Store**: FAISS
+- **Memory**: ConversationSummaryMemory
+- **Components**:
+  - Main API server (main.py)
+  - RAG chain implementation (rag_chain.py)
+  - Document processing system
+  - Memory management
+  - Error handling middleware
+  - Health check endpoint
+  - Debugging endpoints
+
+## 💻 System Components
+
+### Backend Endpoints
+- `/ask` - Process questions using RAG
+- `/upload-document` - Upload new documents (.txt, .md, .pdf)
+- `/documents` - List available documents
+- `/history` - Get conversation history
+- `/health` - Check system health
+- `/activate-document/{filename}` - Switch active document
+- `/reset-memory` - Reset conversation memory
+- `/generate-summary` - Force generate conversation summary
+
+### Frontend Pages & Components
+- Main chat interface
+- Document sidebar
+- Message history display
+- Debug panel with:
+  - System status
+  - Memory details
+  - Document information
+  - Conversation summary
+  - Force summary generation button
+- File upload modal
+- Settings interface
 
 ## 🚀 Getting Started
 
@@ -122,6 +182,7 @@ A modern, intelligent Retrieval-Augmented Generation (RAG) chatbot system with c
 - View conversation history in the chat window
 - Reset memory using the reset button
 - Monitor memory attributes in the debug panel
+- Use "Force Generate Summary" in the debug panel if needed
 
 ## 🔧 Configuration
 

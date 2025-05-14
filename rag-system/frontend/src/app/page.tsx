@@ -445,7 +445,7 @@ export default function Home() {
                     <input 
                       type="file" 
                       className="hidden" 
-                      accept=".txt,.md" 
+                      accept=".txt,.md,.pdf" 
                       onChange={(e) => {
                         if (apiUrl) handleFileUpload(e, apiUrl);
                       }} 

@@ -4,9 +4,10 @@ Improved Retrieval‑Augmented Generation (RAG) chain that:
   • Implements similarity search with limited results
   • Handles off-topic questions properly
   • Maintains conversation memory with summaries
+  • Supports multiple document formats including PDFs
 """
 
-from langchain_community.document_loaders import TextLoader
+from langchain_community.document_loaders import TextLoader, PyPDFLoader, DirectoryLoader
 from langchain_mistralai.chat_models import ChatMistralAI
 from langchain_mistralai.embeddings import MistralAIEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -19,7 +20,8 @@ import os
 import time
 import logging
 from dotenv import load_dotenv
-from typing import Optional
+from typing import Optional, List
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +31,36 @@ logger = logging.getLogger(__name__)
 #  Load environment variables (.env should contain MISTRAL_API_KEY=sk‑***)
 # ────────────────────────────────────────────────────────────────────────────
 load_dotenv()
+
+
+# ────────────────────────────────────────────────────────────────────────────
+#  Document loading helper functions
+# ────────────────────────────────────────────────────────────────────────────
+def load_document(document_path: str):
+    """Load a document based on its file extension."""
+    logger.info(f"Attempting to load document: {document_path}")
+    
+    if not os.path.exists(document_path):
+        logger.error(f"❌ {document_path} file not found. Please create this file before continuing.")
+        raise FileNotFoundError(f"{document_path} file not found in the current directory")
+    
+    file_extension = Path(document_path).suffix.lower()
+    
+    if file_extension == '.pdf':
+        logger.info(f"Loading PDF document: {document_path}")
+        loader = PyPDFLoader(document_path)
+        docs = loader.load()
+        logger.info(f"✅ Successfully loaded PDF: {document_path} with {len(docs)} pages")
+        return docs
+    elif file_extension in ['.txt', '.md']:
+        logger.info(f"Loading text document: {document_path}")
+        loader = TextLoader(document_path)
+        docs = loader.load()
+        logger.info(f"✅ Successfully loaded text file: {document_path}")
+        return docs
+    else:
+        logger.error(f"❌ Unsupported file type: {file_extension}")
+        raise ValueError(f"Unsupported file type: {file_extension}. Please use .txt, .md, or .pdf files")
 
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -44,12 +76,8 @@ def get_rag_chain(document_path="essay.txt"):
 
     # 1️⃣  Load document and split into strategic chunks
     try:
-        if not os.path.exists(document_path):
-            logger.error(f"❌ {document_path} file not found. Please create this file before continuing.")
-            raise FileNotFoundError(f"{document_path} file not found in the current directory")
-            
-        docs = TextLoader(document_path).load()
-        logger.info(f"✅ Successfully loaded {document_path}")
+        # Use the document loader helper function
+        docs = load_document(document_path)
     except Exception as e:
         logger.error(f"❌ Error loading document: {str(e)}")
         raise ValueError(f"Failed to load {document_path}: {str(e)}")
