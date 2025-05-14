@@ -93,3 +93,9 @@ embeddings/
 *.h5
 *.npy
 *.npz
+
+# Explicitly allow demo videos
+!demo/
+!demo/*.mp4
+!demo/*.webm
+!demo/*.mov
