@@ -4,20 +4,23 @@ A modern, intelligent Retrieval-Augmented Generation (RAG) chatbot system with c
 
 ## 🎬 Demo Video
 
-To add your recorded demo video:
-1. Upload your video file to the repository or a video hosting service like YouTube
-2. If uploading to the repository, place it in a `demo` folder
-3. Replace the placeholder link below with the actual link to your video
+[**Download the RAG Chatbot Demo Video**](https://github.com/YOUR-USERNAME/YOUR-REPO-NAME/raw/main/demo/your-video-filename.mp4)
 
-```
-![RAG Chatbot Demo](demo/your-video-filename.mp4)
-```
+*Note: GitHub doesn't display videos directly in README files. For better visibility:*
 
-or for YouTube:
+**Option 1: Replace with your YouTube link (RECOMMENDED)**
+- Upload your video to YouTube
+- Replace YOUR_VIDEO_ID in the link below with your YouTube video ID
+- Delete other options
 
-```
 [![RAG Chatbot Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
-```
+
+**Option 2: Create a thumbnail image**
+- Extract a screenshot from your video
+- Save it as screenshot.png in the demo folder
+- Update the paths below and delete other options
+
+[![Click to play demo video](demo/screenshot.png)](https://github.com/YOUR-USERNAME/YOUR-REPO-NAME/raw/main/demo/your-video-filename.mp4)
 
 ## ✨ Features
 
