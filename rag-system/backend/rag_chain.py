@@ -123,10 +123,12 @@ Chat History:
 Question: {question}
 
 Guidelines:
-1. If the answer is IN THE CONTEXT, provide it based on that information.
-2. If the answer is IN THE CHAT HISTORY, use that information to respond.
-3. If the answer cannot be found in either the context or chat history, respond with "I don't have information about that in my knowledge base."
-4. NEVER make up information that isn't in the context or chat history.
+1. If the question is a greeting (like "hello", "hi", etc.), respond with a friendly greeting.
+2. If the question is small talk or casual conversation, respond naturally without requiring info from the context.
+3. If the answer is IN THE CONTEXT, provide it based on that information.
+4. If the answer is IN THE CHAT HISTORY, use that information to respond.
+5. If the answer cannot be found in either the context or chat history, respond with "I don't have information about that in my knowledge base."
+6. NEVER make up information that isn't in the context or chat history.
 """
     )
 
@@ -138,11 +140,11 @@ Guidelines:
         combine_docs_chain_kwargs={"prompt": qa_prompt},
         verbose=True,
         return_source_documents=True,
-        return_generated_question=True,
+        return_generated_question=False,  # Don't return the generated question
         rephrase_question=False,  # Disable question rephrasing
     )
     
-    logger.info("Created improved RAG chain")
+    logger.info("Created improved RAG chain with disabled question rephrasing")
     
     return rag_chain
 

@@ -283,7 +283,10 @@ async def ask_question(query: Query):
         
         # Process the question
         logger.info(f"Invoking RAG chain with question: {query.input}")
-        result = invoke_with_retry(rag_chain, {"question": query.input})
+        
+        # Force using the exact question without rephrasing
+        question = query.input
+        result = invoke_with_retry(rag_chain, {"question": question})
         
         # More detailed logging of the result
         logger.info(f"RAG chain result keys: {result.keys() if result else 'None'}")
