@@ -6,6 +6,9 @@ A modern, intelligent Retrieval-Augmented Generation (RAG) chatbot system with c
 
 [![RAG Chatbot Demo](https://drive.google.com/uc?export=view&id=1xOnWm4EFchmitoNcC0Na2-F322ewk80_)](https://drive.google.com/file/d/1xOnWm4EFchmitoNcC0Na2-F322ewk80_/preview)
 
+<iframe src="https://drive.google.com/file/d/1xOnWm4EFchmitoNcC0Na2-F322ewk80_/preview" width="640" height="480" allow="autoplay"></iframe>
+
+
 ## ✨ Key Features
 
 - Smart Document Processing (TXT, MD, PDF support)
