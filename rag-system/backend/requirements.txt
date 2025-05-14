@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+langchain
+langchain-community
+langchain-mistralai
+faiss-cpu
+python-dotenv
+python-multipart
+pypdf
+unstructured
+unstructured-inference
