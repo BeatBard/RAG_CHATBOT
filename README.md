@@ -4,9 +4,10 @@ A modern, intelligent Retrieval-Augmented Generation (RAG) chatbot system with c
 
 ## 🎬 Demo Video
 
-The demo video for this project is hosted on Google Drive. You can access it through the following link:
-
-[Watch RAG Chatbot Demo](https://drive.google.com/file/d/YOUR_FILE_ID/view)
+<video width="640" height="360" controls>
+  <source src="demo/your-video-filename.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 ## ✨ Key Features
 
