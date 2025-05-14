@@ -4,134 +4,30 @@ A modern, intelligent Retrieval-Augmented Generation (RAG) chatbot system with c
 
 ## 🎬 Demo Video
 
-[**Download the RAG Chatbot Demo Video**](demo/your-video-filename.mp4)
+The demo video for this project is hosted on Google Drive. You can access it through the following link:
 
-*Note: GitHub doesn't display videos directly in README files. For better visibility:*
+[Watch RAG Chatbot Demo](https://drive.google.com/file/d/YOUR_FILE_ID/view)
 
-**Recommended Option: Create a screenshot thumbnail**
-- Extract a screenshot from your video
-- Save it as screenshot.png in the demo folder
-- The image will link to your video when clicked
+## ✨ Key Features
 
-```
-
-**Option 1: Replace with your YouTube link (RECOMMENDED)**
-- Upload your video to YouTube
-- Replace YOUR_VIDEO_ID in the link below with your YouTube video ID
-- Delete other options
-
-[![RAG Chatbot Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
-
-**Option 2: Create a thumbnail image**
-- Extract a screenshot from your video
-- Save it as screenshot.png in the demo folder
-- Update the paths below and delete other options
-
-[![Click to play demo video](demo/screenshot.png)](https://github.com/YOUR-USERNAME/YOUR-REPO-NAME/raw/main/demo/your-video-filename.mp4)
-
-## ✨ Features
-
-### Core Features
-- **Smart Document Processing**
-  - Intelligent text chunking (400 characters with 50-character overlap)
-  - Support for multiple document formats (.txt, .md, .pdf)
-  - PDF processing with per-page extraction
-  - Automatic document switching with memory reset
-  - Document management interface
-
-- **Advanced Conversation Management**
-  - Persistent conversation memory
-  - Context-aware responses
-  - Conversation history tracking
-  - Memory summary generation with buffer-based summarization
-  - Easy memory reset functionality
-  - Force summary generation capability
-
-- **Enhanced Retrieval System**
-  - Optimized similarity search
-  - Top-3 most relevant chunk retrieval
-  - Context-aware answer generation
-  - Off-topic question detection
-  - Direct questioning without rephrasing
-
-### Technical Features
-- **Robust Error Handling**
-  - API rate limit management with exponential backoff retry
-  - Graceful error recovery
-  - User-friendly error messages
-  - Automatic retry mechanisms
-  - Detailed logging
-
-- **Modern UI/UX**
-  - Responsive design
-  - Real-time status updates
-  - Intuitive document management
-  - Clean and modern interface
-  - Dark/light mode support
-  - Debug panel for system insights
+- Smart Document Processing (TXT, MD, PDF support)
+- Advanced Conversation Management with Memory
+- Enhanced Retrieval System with context-aware responses
+- Robust Error Handling with rate limit management
+- Modern UI/UX with responsive design
 
 ## 🏗️ Architecture
 
-### Frontend
-- **Framework**: Next.js 14 with React
-- **Styling**: Tailwind CSS
-- **State Management**: React Hooks
-- **API Integration**: Fetch API with error handling
-- **Components**:
-  - Chat interface with message history
-  - Document management sidebar
-  - Debug panel with system insights
-  - File upload interface
-  - Responsive layout system
-
-### Backend
-- **Framework**: FastAPI
-- **RAG Implementation**: LangChain
-- **Language Model**: Mistral AI (Large & Embed models)
-- **Vector Store**: FAISS
-- **Memory**: ConversationSummaryMemory
-- **Components**:
-  - Main API server (main.py)
-  - RAG chain implementation (rag_chain.py)
-  - Document processing system
-  - Memory management
-  - Error handling middleware
-  - Health check endpoint
-  - Debugging endpoints
-
-## 💻 System Components
-
-### Backend Endpoints
-- `/ask` - Process questions using RAG
-- `/upload-document` - Upload new documents (.txt, .md, .pdf)
-- `/documents` - List available documents
-- `/history` - Get conversation history
-- `/health` - Check system health
-- `/activate-document/{filename}` - Switch active document
-- `/reset-memory` - Reset conversation memory
-- `/generate-summary` - Force generate conversation summary
-
-### Frontend Pages & Components
-- Main chat interface
-- Document sidebar
-- Message history display
-- Debug panel with:
-  - System status
-  - Memory details
-  - Document information
-  - Conversation summary
-  - Force summary generation button
-- File upload modal
-- Settings interface
+- **Frontend**: Next.js 14 with React, Tailwind CSS
+- **Backend**: FastAPI, LangChain, Mistral AI, FAISS Vector Store
+- **Memory**: ConversationSummaryMemory for persistent chat context
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - Docker and Docker Compose (recommended)
-- OR
-- Python 3.9+
-- Node.js 18+
+- OR Python 3.9+ and Node.js 18+
 - Mistral API key
 
 ### Quick Start with Docker
@@ -144,6 +40,7 @@ A modern, intelligent Retrieval-Augmented Generation (RAG) chatbot system with c
 
 2. Create environment file:
    ```bash
+   # Create .env file with your Mistral API key
    echo "MISTRAL_API_KEY=your-api-key-here" > .env
    ```
 
@@ -173,39 +70,24 @@ A modern, intelligent Retrieval-Augmented Generation (RAG) chatbot system with c
    npm run dev
    ```
 
-3. Access the application at `http://localhost:3000`
-
 ## 📚 Usage Guide
 
-### Document Management
-1. Click "Upload Document" to add new documents
-2. Select a document from the sidebar to make it active
-3. The system will automatically reset memory when switching documents
-
-### Chat Interface
-1. Type your question in the input field
-2. Press Enter or click Send
-3. View the response in the chat window
-4. Use the debug panel to monitor system state
-
-### Memory Management
-- View conversation history in the chat window
-- Reset memory using the reset button
-- Monitor memory attributes in the debug panel
-- Use "Force Generate Summary" in the debug panel if needed
+1. **Upload documents** using the upload button
+2. **Select a document** from the sidebar to make it active
+3. **Ask questions** in the chat interface
+4. **View responses** based on the document content
+5. Use the **debug panel** to monitor system state and reset memory if needed
 
 ## 🔧 Configuration
 
-### Environment Variables
 - `MISTRAL_API_KEY`: Your Mistral AI API key
 - `CHUNK_SIZE`: Document chunk size (default: 400)
 - `CHUNK_OVERLAP`: Chunk overlap size (default: 50)
 - `TOP_K`: Number of chunks to retrieve (default: 3)
 
-### Docker Configuration
-The system uses two services:
-- Backend: FastAPI server (port 8000)
-- Frontend: Next.js application (port 3000)
+## 📝 License
+
+This project is licensed under the MIT License.
 
 ## 🤝 Contributing
 
@@ -214,10 +96,6 @@ The system uses two services:
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
