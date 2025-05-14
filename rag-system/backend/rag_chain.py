@@ -139,6 +139,7 @@ Guidelines:
         verbose=True,
         return_source_documents=True,
         return_generated_question=True,
+        rephrase_question=False,  # Disable question rephrasing
     )
     
     logger.info("Created improved RAG chain")
