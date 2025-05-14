@@ -7,36 +7,36 @@ interface DocumentInfo {
   filename: string;
   size: number;
   active: boolean;
+  last_modified?: string;
+  upload_date?: string;
 }
 
-// Support both local and network access
-// Use window.location.hostname to get the current hostname dynamically
+// Support both local and network access, but avoid hydration errors
 const getApiUrl = () => {
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  // Handle both localhost and IP addresses
-  return `http://${hostname}:8000`;
+  // Default API URL for server-side rendering
+  return 'http://localhost:8000';
 };
 
 // Theme colors
 const colors = {
-  primary: '#1a73e8',
-  primaryDark: '#0d47a1',
-  secondary: '#34a853',
-  secondaryDark: '#1b5e20',
-  background: '#f8f9fa',
+  primary: '#2563eb',
+  primaryDark: '#1d4ed8',
+  secondary: '#059669',
+  secondaryDark: '#047857',
+  background: '#f8fafc',
   surface: '#ffffff',
-  error: '#d32f2f',
-  warning: '#ff9800',
+  error: '#dc2626',
+  warning: '#f59e0b',
   text: {
-    primary: '#202124',
-    secondary: '#5f6368',
-    disabled: '#9aa0a6',
-    hint: '#3c4043',
+    primary: '#1e293b',
+    secondary: '#475569',
+    disabled: '#94a3b8',
+    hint: '#334155',
   },
-  human: '#e8f0fe',
-  humanBorder: '#d2e3fc',
-  ai: '#e6f4ea',
-  aiBorder: '#ceead6',
+  human: '#eff6ff',
+  humanBorder: '#bfdbfe',
+  ai: '#ecfdf5',
+  aiBorder: '#a7f3d0',
 };
 
 export default function Home() {
@@ -55,14 +55,17 @@ export default function Home() {
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
   const [showDocuments, setShowDocuments] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
+  const [activeDocumentName, setActiveDocumentName] = useState('');
+  const [debugInfo, setDebugInfo] = useState<any>({});
 
   useEffect(() => {
-    // Set the API URL when the component mounts
-    const url = getApiUrl();
-    setApiUrl(url);
+    // Set the dynamic API URL only on the client-side to avoid hydration errors
+    const hostname = window.location.hostname;
+    const dynamicApiUrl = `http://${hostname}:8000`;
+    setApiUrl(dynamicApiUrl);
     
-    // Check server health
-    const checkServerHealth = async () => {
+    // Check server health using a local function to avoid hydration issues
+    const checkServerHealth = async (url: string) => {
       try {
         console.log('Checking server health at:', url);
         const response = await fetch(`${url}/health`, {
@@ -78,8 +81,8 @@ export default function Home() {
           setServerStatus('online');
           
           // If server is online, fetch conversation history and documents
-          fetchHistory();
-          fetchDocuments();
+          fetchHistory(url);
+          fetchDocuments(url);
         } else {
           console.log('Server responded with error:', response.status);
           setServerStatus('offline');
@@ -90,44 +93,94 @@ export default function Home() {
       }
     };
 
-    checkServerHealth();
+    // Call the health check function
+    checkServerHealth(dynamicApiUrl);
     
     // Check server health every 5 seconds
-    const interval = setInterval(checkServerHealth, 5000);
+    const interval = setInterval(() => checkServerHealth(dynamicApiUrl), 5000);
     
     // Clean up the interval when component unmounts
     return () => clearInterval(interval);
   }, []);
 
-  const fetchHistory = async () => {
-    if (serverStatus !== 'online' || !apiUrl) return;
+  const fetchHistory = async (url = apiUrl) => {
+    if (serverStatus !== 'online' || !url) return;
     
     try {
-      const response = await fetch(`${apiUrl}/history`);
+      console.log('Fetching history from:', `${url}/history`);
+      const response = await fetch(`${url}/history`);
+      
       if (response.ok) {
         const data = await response.json();
-        console.log('History data:', data);
-        setHistory(data.history || []);
-        setSummary(data.summary || '');
-        setMemoryAttributes(data.memory_attributes || []);
-        setChainAttributes(data.chain_attributes || []);
+        console.log('History data full response:', JSON.stringify(data));
+        
+        // Update history array
+        if (data.history && Array.isArray(data.history)) {
+          setHistory(data.history);
+          console.log(`Set history with ${data.history.length} messages`);
+        } else {
+          console.warn('History is not an array:', data.history);
+          setHistory([]);
+        }
+        
+        // Update conversation summary - add detailed logging
+        console.log('Raw summary value:', data.summary);
+        console.log('Summary type:', typeof data.summary);
+        console.log('Summary length:', data.summary ? data.summary.length : 0);
+        
+        if (data.summary !== undefined) {
+          console.log('Setting summary:', data.summary);
+          setSummary(data.summary);
+        } else {
+          console.warn('Summary is undefined in response');
+          setSummary('');
+        }
+        
+        // Properly handle memory attributes - ensure it's an array
+        if (data.memory_attributes && Array.isArray(data.memory_attributes)) {
+          setMemoryAttributes(data.memory_attributes);
+        } else if (data.memory_attributes && typeof data.memory_attributes === 'object') {
+          // If it's an object instead of an array, convert to array of keys
+          setMemoryAttributes(Object.keys(data.memory_attributes));
+        } else {
+          setMemoryAttributes([]);
+        }
+        
+        // Properly handle chain attributes
+        if (data.chain_attributes && Array.isArray(data.chain_attributes)) {
+          setChainAttributes(data.chain_attributes);
+        } else if (data.chain_attributes && typeof data.chain_attributes === 'object') {
+          setChainAttributes(Object.keys(data.chain_attributes));
+        } else {
+          setChainAttributes([]);
+        }
+        
+        // Save any additional debug information
+        if (data.debug) {
+          setDebugInfo(data.debug);
+        }
       } else {
-        console.error('Failed to fetch history:', response.status);
+        console.error(`Failed to fetch history: ${response.status}`, await response.text());
       }
     } catch (error) {
       console.error('Error fetching history:', error);
     }
   };
 
-  const fetchDocuments = async () => {
-    if (serverStatus !== 'online' || !apiUrl) return;
+  const fetchDocuments = async (url = apiUrl) => {
+    if (serverStatus !== 'online' || !url) return;
     
     try {
-      const response = await fetch(`${apiUrl}/documents`);
+      const response = await fetch(`${url}/documents`);
       if (response.ok) {
         const data = await response.json();
         console.log('Documents:', data);
         setDocuments(data || []);
+        // Find active document
+        const activeDoc = data?.find((doc: DocumentInfo) => doc.active);
+        if (activeDoc) {
+          setActiveDocumentName(activeDoc.filename);
+        }
       } else {
         console.error('Failed to fetch documents:', response.status);
       }
@@ -136,13 +189,18 @@ export default function Home() {
     }
   };
 
-  const ask = async () => {
-    if (!question.trim() || serverStatus !== 'online') return;
+  const ask = async (url = apiUrl) => {
+    if (!question.trim() || serverStatus !== 'online' || !url) return;
+    
+    // Add user message to history immediately for better UX
+    const userMessage = { role: 'human', content: question };
+    setHistory([...history, userMessage]);
+    
     setLoading(true);
     setError('');
     try {
-      console.log('Sending request to:', `${apiUrl}/ask`);
-      const res = await fetch(`${apiUrl}/ask`, {
+      console.log('Sending request to:', `${url}/ask`);
+      const res = await fetch(`${url}/ask`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -162,34 +220,38 @@ export default function Home() {
         } else if (res.status === 404) {
           setError('❌ API endpoint not found. Please check if the backend server is running.');
         } else if (res.status === 500) {
-          setError(`❌ Server error: ${errorData.detail || 'Something went wrong on the server.'}`);
+          setError(`🔥 Server error: ${errorData.detail || 'Unknown error'}`);
         } else {
-          setError(`❌ Error: ${errorData.detail || 'Something went wrong. Please try again.'}`);
+          setError(`Error: ${errorData.detail || 'Unknown error'}`);
         }
-        setAnswer('');
-        return;
+      } else {
+        const data = await res.json();
+        console.log('Response data:', data);
+        
+        if (data.answer) {
+          const aiMessage = { role: 'ai', content: data.answer };
+          setHistory([...history, userMessage, aiMessage]);
+          
+          // Fetch updated history with new summary after getting answer
+          setTimeout(() => {
+            fetchHistory(url);
+          }, 500);
+        }
+        
+        setQuestion('');
       }
-
-      const data = await res.json();
-      console.log('Success response:', data);
-      setAnswer(data.answer);
-      
-      // Fetch updated history after getting an answer
-      fetchHistory();
     } catch (error) {
-      console.error('Network error:', error);
-      setError(`❌ Network error. Please check if the backend server is running at ${apiUrl}`);
-      setAnswer('');
+      console.error('Error sending question:', error);
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
-      setQuestion(''); // Clear the input after asking
     }
   };
 
   // File upload handler
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, url = apiUrl) => {
     const files = event.target.files;
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || !url) return;
     
     const file = files[0];
     const formData = new FormData();
@@ -198,7 +260,7 @@ export default function Home() {
     setUploadStatus('Uploading...');
     
     try {
-      const response = await fetch(`${apiUrl}/upload-document`, {
+      const response = await fetch(`${url}/upload-document`, {
         method: 'POST',
         body: formData,
       });
@@ -207,7 +269,7 @@ export default function Home() {
         const result = await response.json();
         setUploadStatus(`✅ Successfully uploaded ${result.filename}`);
         // Refresh documents list
-        fetchDocuments();
+        fetchDocuments(url);
       } else {
         const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
         setUploadStatus(`❌ Upload failed: ${errorData.detail}`);
@@ -219,18 +281,18 @@ export default function Home() {
   };
 
   // Activate a document
-  const activateDocument = async (filename: string) => {
-    if (serverStatus !== 'online' || !apiUrl) return;
+  const activateDocument = async (filename: string, url = apiUrl) => {
+    if (serverStatus !== 'online' || !url) return;
     
     try {
-      const response = await fetch(`${apiUrl}/activate-document/${filename}`, {
+      const response = await fetch(`${url}/activate-document/${filename}`, {
         method: 'POST',
       });
       
       if (response.ok) {
         setUploadStatus(`✅ Activated document: ${filename}`);
         // Refresh documents list
-        fetchDocuments();
+        fetchDocuments(url);
       } else {
         const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
         setUploadStatus(`❌ Failed to activate: ${errorData.detail}`);
@@ -242,394 +304,428 @@ export default function Home() {
   };
 
   // Reset the conversation memory
-  const resetMemory = async () => {
-    if (serverStatus !== 'online' || !apiUrl) return;
+  const resetMemory = async (url = apiUrl) => {
+    if (serverStatus !== 'online' || !url) return;
     
     try {
-      const response = await fetch(`${apiUrl}/reset-memory`, {
+      setLoading(true);
+      const response = await fetch(`${url}/reset-memory`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       
       if (response.ok) {
-        const result = await response.json();
-        setError(`✅ ${result.message}`);
-        // Refresh history to show it's been cleared
-        fetchHistory();
+        const data = await response.json();
+        console.log('Memory reset successful:', data);
+        
+        // Clear all conversation data
+        setHistory([]);
+        setSummary('');
+        
+        // Show confirmation to the user
+        setError(''); // Clear any previous error
+        
+        // Add system message to history
+        const systemMessage = { role: 'ai', content: 'Memory has been reset successfully.' };
+        setHistory([systemMessage]);
+        
+        // Refresh history data
+        setTimeout(() => {
+          fetchHistory(url);
+        }, 500);
       } else {
-        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-        setError(`❌ Failed to reset memory: ${errorData.detail}`);
+        console.error('Failed to reset memory:', response.status);
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error occurred' }));
+        setError(`Failed to reset memory: ${errorData.detail || 'Unknown error'}`);
       }
     } catch (error) {
-      setError(`❌ Network error while resetting memory`);
-      console.error('Reset memory error:', error);
+      console.error('Error resetting memory:', error);
+      setError('Network error when resetting memory. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Format file size
+  const formatFileSize = (size: number) => {
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // Force summary generation
+  const generateSummary = async (url = apiUrl) => {
+    if (serverStatus !== 'online' || !url) return;
+    
+    try {
+      console.log('Forcing summary generation via:', `${url}/generate-summary`);
+      const response = await fetch(`${url}/generate-summary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Summary generation result:', data);
+        
+        if (data.summary) {
+          setSummary(data.summary);
+          setError('Summary generated successfully');
+          setTimeout(() => setError(''), 3000);
+        } else {
+          setError(`Summary generation warning: ${data.message}`);
+        }
+        
+        // Refresh history data
+        setTimeout(() => {
+          fetchHistory(url);
+        }, 500);
+      } else {
+        console.error('Failed to generate summary:', response.status);
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error occurred' }));
+        setError(`Failed to generate summary: ${errorData.detail || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      setError('Network error when generating summary. Please try again.');
     }
   };
 
   return (
-    <main style={{ 
-      padding: 40, 
-      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', 
-      maxWidth: 800, 
-      margin: 'auto',
-      color: colors.text.primary,
-      background: colors.background,
-      borderRadius: 12,
-      boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-    }}>
-      <h1 style={{ color: colors.primaryDark, marginBottom: 24 }}>🤖 RAG Chatbot with Memory</h1>
-      
-      {serverStatus === 'checking' && (
-        <div style={{ 
-          marginTop: 20, 
-          padding: '12px 16px', 
-          background: '#fff3e0', 
-          border: '1px solid #ffcc80',
-          borderRadius: 8,
-          color: '#e65100'
-        }}>
-          🔄 Checking server status at {apiUrl}...
-        </div>
-      )}
-      
-      {serverStatus === 'offline' && (
-        <div style={{ 
-          marginTop: 20, 
-          padding: '12px 16px', 
-          background: '#ffebee', 
-          border: '1px solid #ffcdd2',
-          borderRadius: 8,
-          color: colors.error
-        }}>
-          ❌ Backend server is offline. Please start the server at {apiUrl}
-        </div>
-      )}
-
-      <div style={{ 
-        display: 'flex', 
-        marginTop: 24,
-        gap: 8 
-      }}>
-        <input
-          type="text"
-          placeholder="Ask something..."
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && ask()}
-          style={{
-            padding: '12px 16px',
-            flex: 1,
-            fontSize: 16,
-            border: '1px solid #dadce0',
-            borderRadius: 8,
-            outline: 'none',
-            color: colors.text.primary
-          }}
-        />
-        <button
-          onClick={ask}
-          disabled={loading || serverStatus !== 'online'}
-          style={{
-            padding: '0 24px',
-            background: serverStatus === 'online' ? colors.primary : '#dadce0',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            cursor: serverStatus === 'online' ? 'pointer' : 'not-allowed',
-            fontWeight: 500,
-            fontSize: 16,
-            transition: 'background 0.2s'
-          }}
-        >
-          {loading ? 'Thinking...' : 'Ask'}
-        </button>
-      </div>
-
-      {error && (
-        <div style={{ 
-          marginTop: 20, 
-          padding: '12px 16px', 
-          background: '#ffebee', 
-          border: '1px solid #ffcdd2',
-          borderRadius: 8,
-          color: colors.error
-        }}>
-          {error}
-        </div>
-      )}
-
-      {answer && (
-        <div style={{ marginTop: 32 }}>
-          <h2 style={{ color: colors.primaryDark, marginBottom: 12 }}>💬 Answer:</h2>
-          <div style={{
-            padding: 16,
-            background: colors.ai,
-            border: `1px solid ${colors.aiBorder}`,
-            borderRadius: 8,
-            fontSize: 16,
-            lineHeight: 1.5
-          }}>
-            {answer}
-          </div>
-        </div>
-      )}
-
-      <div style={{ marginTop: 32 }}>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button 
-            onClick={() => setShowHistory(!showHistory)}
-            style={{
-              padding: '8px 16px',
-              background: showHistory ? colors.primary : '#f1f3f4',
-              color: showHistory ? 'white' : colors.text.primary,
-              border: 'none',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontWeight: 500,
-              transition: 'all 0.2s'
-            }}
-          >
-            {showHistory ? 'Hide Conversation Memory' : 'Show Conversation Memory'}
-          </button>
-          
-          <button 
-            onClick={() => setShowDebug(!showDebug)}
-            style={{
-              padding: '8px 16px',
-              background: showDebug ? colors.primary : '#f1f3f4',
-              color: showDebug ? 'white' : colors.text.primary,
-              border: 'none',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontWeight: 500,
-              transition: 'all 0.2s'
-            }}
-          >
-            {showDebug ? 'Hide Debug Info' : 'Show Debug Info'}
-          </button>
-          
-          <button 
-            onClick={fetchHistory}
-            style={{
-              padding: '8px 16px',
-              background: '#e8f0fe',
-              color: colors.primary,
-              border: '1px solid #d2e3fc',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontWeight: 500
-            }}
-          >
-            Refresh Memory
-          </button>
-          
-          <button 
-            onClick={resetMemory}
-            style={{
-              padding: '8px 16px',
-              background: '#fce8e6',
-              color: colors.error,
-              border: '1px solid #fadad9',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontWeight: 500
-            }}
-          >
-            Reset Memory
-          </button>
-        </div>
-
-        {showHistory && (
-          <div style={{ marginTop: 24 }}>
-            <h3 style={{ color: colors.primaryDark, marginBottom: 12 }}>Conversation Summary:</h3>
-            <div style={{ 
-              padding: 16, 
-              background: '#fff',
-              border: '1px solid #e8eaed',
-              borderRadius: 8,
-              color: summary ? colors.text.primary : colors.text.secondary,
-              fontSize: 16,
-              lineHeight: 1.5
-            }}>
-              {summary || 'No conversation summary yet.'}
-            </div>
-
-            <h3 style={{ color: colors.primaryDark, marginTop: 24, marginBottom: 12 }}>Message History:</h3>
-            {history.length === 0 ? (
-              <p style={{ color: colors.text.secondary, fontStyle: 'italic' }}>No conversation history yet.</p>
-            ) : (
-              <div>
-                {history.map((msg, index) => (
-                  <div key={index} style={{ 
-                    marginBottom: 12,
-                    padding: 16,
-                    background: msg.role === 'human' ? colors.human : colors.ai,
-                    borderRadius: 8,
-                    border: `1px solid ${msg.role === 'human' ? colors.humanBorder : colors.aiBorder}`
-                  }}>
-                    <strong style={{ 
-                      color: msg.role === 'human' ? colors.primary : colors.secondary,
-                      display: 'block',
-                      marginBottom: 8,
-                      fontSize: 14
-                    }}>
-                      {msg.role === 'human' ? '👤 You:' : '🤖 AI:'}
-                    </strong>
-                    <p style={{ 
-                      margin: 0,
-                      color: colors.text.primary,
-                      lineHeight: 1.5,
-                      fontSize: 16
-                    }}>
-                      {msg.content}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white text-gray-800">
+      {/* Header */}
+      <header className="pt-8 pb-6 text-center">
+        <h1 className="text-5xl font-bold text-blue-600 mb-2">RAG Chatbot</h1>
+        <p className="text-gray-600 text-lg">Intelligent document-based conversations</p>
         
-        {showDebug && (
-          <div style={{ marginTop: 24 }}>
-            <h3 style={{ color: colors.primaryDark, marginBottom: 12 }}>Debug Information:</h3>
-            <div style={{ 
-              padding: 16, 
-              background: '#f8f9fa', 
-              border: '1px solid #dadce0',
-              borderRadius: 8,
-              fontFamily: 'monospace',
-              fontSize: 14,
-              lineHeight: 1.5,
-              color: colors.text.primary
-            }}>
-              <h4 style={{ color: colors.primary, marginTop: 0 }}>Chain Attributes:</h4>
-              <ul style={{ color: colors.text.secondary }}>
-                {chainAttributes.length > 0 ? (
-                  chainAttributes.map((attr, index) => (
-                    <li key={`chain_${index}`}>{attr}</li>
-                  ))
-                ) : (
-                  <li style={{ fontStyle: 'italic' }}>No chain attributes available</li>
-                )}
-              </ul>
-              
-              <h4 style={{ color: colors.primary }}>Memory Attributes:</h4>
-              <ul style={{ color: colors.text.secondary }}>
-                {memoryAttributes.length > 0 ? (
-                  memoryAttributes.map((attr, index) => (
-                    <li key={`memory_${index}`}>{attr}</li>
-                  ))
-                ) : (
-                  <li style={{ fontStyle: 'italic' }}>No memory attributes available</li>
-                )}
-              </ul>
-            </div>
+        {/* Server Status Indicator */}
+        <div className="mt-4 flex justify-center">
+          <div className={`px-4 py-2 rounded-full text-sm font-medium inline-flex items-center ${
+            serverStatus === 'online' ? 'bg-green-100 text-green-700' :
+            serverStatus === 'offline' ? 'bg-red-100 text-red-700' :
+            'bg-yellow-100 text-yellow-700'
+          }`}>
+            <span className={`w-3 h-3 rounded-full mr-2 ${
+              serverStatus === 'online' ? 'bg-green-500' :
+              serverStatus === 'offline' ? 'bg-red-500' :
+              'bg-yellow-500'
+            }`}></span>
+            {serverStatus === 'online' ? 'Server Online' :
+             serverStatus === 'offline' ? 'Server Offline' :
+             'Checking Server...'}
           </div>
-        )}
-      </div>
+        </div>
+      </header>
 
-      {/* Document Management Section */}
-      <div style={{ marginBottom: 24 }}>
-        <button
-          onClick={() => setShowDocuments(!showDocuments)}
-          style={{
-            background: colors.primary,
-            color: 'white',
-            border: 'none',
-            padding: '10px 16px',
-            borderRadius: 8,
-            cursor: 'pointer',
-            marginBottom: 16,
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: 14,
-          }}
-        >
-          {showDocuments ? '📁 Hide Documents' : '📁 Manage Documents'}
-        </button>
-
-        {showDocuments && (
-          <div style={{ 
-            background: 'white', 
-            padding: 16, 
-            borderRadius: 8,
-            border: '1px solid #ddd',
-            marginBottom: 16
-          }}>
-            <h3 style={{ margin: '0 0 16px 0', color: colors.primaryDark }}>Document Management</h3>
-            
-            {/* Upload new document */}
-            <div style={{ marginBottom: 16 }}>
-              <label 
-                htmlFor="file-upload" 
-                style={{ 
-                  display: 'inline-block', 
-                  cursor: 'pointer',
-                  background: colors.secondary,
-                  color: 'white',
-                  padding: '8px 16px',
-                  borderRadius: 6,
-                  marginRight: 8
-                }}
-              >
-                📄 Upload New Document
-              </label>
-              <input 
-                id="file-upload" 
-                type="file" 
-                accept=".txt,.md" 
-                onChange={handleFileUpload} 
-                style={{ display: 'none' }}
-              />
-              {uploadStatus && (
-                <span style={{ marginLeft: 8, fontSize: 14 }}>{uploadStatus}</span>
-              )}
-            </div>
-            
-            {/* Document list - update to allow switching */}
-            {documents.length > 0 ? (
-              <div>
-                <h4 style={{ margin: '16px 0 8px', color: colors.text.secondary }}>Available Documents</h4>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                  {documents.map((doc) => (
-                    <li 
-                      key={doc.filename}
-                      style={{ 
-                        padding: '8px 12px',
-                        marginBottom: 4,
-                        borderRadius: 6,
-                        display: 'flex',
-                        alignItems: 'center',
-                        background: doc.active ? '#e8f0fe' : 'white',
-                        border: `1px solid ${doc.active ? '#d2e3fc' : '#eee'}`,
-                        cursor: doc.active ? 'default' : 'pointer'
-                      }}
-                      onClick={() => !doc.active && activateDocument(doc.filename)}
-                    >
-                      <span style={{ 
-                        fontWeight: doc.active ? 'bold' : 'normal',
-                        flex: 1,
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}>
-                        {doc.active && <span style={{ color: colors.primary, marginRight: 8 }}>✓</span>}
-                        {doc.filename}
-                      </span>
-                      <span style={{ fontSize: 12, color: colors.text.secondary }}>
-                        {(doc.size / 1024).toFixed(1)} KB
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+      <main className="container mx-auto px-4 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Sidebar - Documents */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-xl shadow-lg p-5 border border-gray-200">
+              <h2 className="text-xl font-semibold mb-4 text-blue-600 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                </svg>
+                Documents
+              </h2>
+              <div className="space-y-4">
+                {/* Upload Button */}
+                <div>
+                  <label className="block">
+                    <div className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-center transition-colors cursor-pointer flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Upload Document
+                    </div>
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept=".txt,.md" 
+                      onChange={(e) => {
+                        if (apiUrl) handleFileUpload(e, apiUrl);
+                      }} 
+                    />
+                  </label>
+                </div>
+                
+                {/* Upload Status */}
+                {uploadStatus && (
+                  <div className="text-sm py-2 px-3 rounded bg-gray-100 text-gray-700">
+                    {uploadStatus}
+                  </div>
+                )}
+                
+                {/* Active Document Info */}
+                {activeDocumentName && (
+                  <div className="text-sm py-2 px-3 rounded bg-blue-50 text-blue-700">
+                    <div className="font-semibold mb-1">Active Document:</div>
+                    <div className="truncate">{activeDocumentName}</div>
+                  </div>
+                )}
+                
+                {/* Document List */}
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {documents.length > 0 ? (
+                    documents.map((doc) => (
+                      <div
+                        key={doc.filename}
+                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                          doc.active
+                            ? 'bg-blue-100 border border-blue-200'
+                            : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                        }`}
+                        onClick={() => !doc.active && apiUrl && activateDocument(doc.filename, apiUrl)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="truncate mr-2 text-sm">{doc.filename}</span>
+                          {doc.active && <span className="text-green-600 text-xs">✓</span>}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {formatFileSize(doc.size)}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-gray-500 text-center py-4 italic">
+                      No documents available. Upload one to start.
+                    </div>
+                  )}
+                </div>
+                
+                {/* Memory Management Button */}
+                <button
+                  onClick={() => {
+                    if (apiUrl) resetMemory(apiUrl);
+                  }}
+                  className="w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-center transition-colors flex items-center justify-center"
+                  disabled={serverStatus !== 'online'}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                  </svg>
+                  Reset Memory
+                </button>
+                
+                {/* Toggle Debug Panel */}
+                <button
+                  onClick={() => setShowDebug(!showDebug)}
+                  className={`w-full mt-2 px-4 py-2 rounded-lg text-center transition-colors flex items-center justify-center ${
+                    showDebug 
+                      ? 'bg-yellow-500 hover:bg-yellow-600 text-white' 
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                  </svg>
+                  {showDebug ? 'Hide Debug Info' : 'Show Debug Info'}
+                </button>
               </div>
-            ) : (
-              <p style={{ color: colors.text.secondary, fontStyle: 'italic' }}>
-                No documents available yet. Upload one to start.
-              </p>
+            </div>
+          </div>
+
+          {/* Main Chat Area */}
+          <div className="lg:col-span-9">
+            <div className="bg-white rounded-xl shadow-lg p-5 border border-gray-200 h-[600px] flex flex-col">
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2">
+                {history.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    <p className="text-lg">No conversation yet</p>
+                    <p className="text-sm mt-2">Start by asking a question about your document</p>
+                  </div>
+                ) : (
+                  history.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`p-4 rounded-lg max-w-[85%] message-animation ${
+                        msg.role === 'human'
+                          ? 'bg-blue-100 border border-blue-200 ml-auto'
+                          : 'bg-green-50 border border-green-200'
+                      }`}
+                    >
+                      <div className="text-sm font-medium mb-1 flex items-center">
+                        {msg.role === 'human' ? (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-blue-700">You</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+                              <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+                            </svg>
+                            <span className="text-green-700">Assistant</span>
+                          </>
+                        )}
+                      </div>
+                      <div className="text-gray-700 whitespace-pre-wrap">{msg.content}</div>
+                    </div>
+                  ))
+                )}
+                
+                {/* Loading indicator */}
+                {loading && (
+                  <div className="flex items-center justify-center space-x-2 text-gray-500 p-4">
+                    <div className="animate-bounce h-2 w-2 bg-blue-500 rounded-full"></div>
+                    <div className="animate-bounce h-2 w-2 bg-blue-500 rounded-full animation-delay-200"></div>
+                    <div className="animate-bounce h-2 w-2 bg-blue-500 rounded-full animation-delay-400"></div>
+                    <span className="ml-2">Thinking...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Error display */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* Input Area */}
+              <div className="mt-auto">
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (apiUrl) ask(apiUrl);
+                  }}
+                  className="flex space-x-2"
+                >
+                  <input
+                    type="text"
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    placeholder="Ask a question..."
+                    className="flex-1 p-3 bg-gray-50 border border-gray-300 text-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={loading || serverStatus !== 'online'}
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading || serverStatus !== 'online' || !question.trim()}
+                    className={`px-6 py-3 rounded-lg font-medium transition-colors flex items-center ${
+                      loading || serverStatus !== 'online' || !question.trim()
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                    Send
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Debug Panel */}
+        {showDebug && (
+          <div className="mt-6 bg-white rounded-xl shadow-lg p-5 border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4 text-yellow-600">Debug Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-medium mb-2 text-gray-700">Conversation Summary</h3>
+                <div className="bg-gray-50 p-3 rounded-lg overflow-x-auto text-sm text-gray-700 border border-gray-200 min-h-[100px] whitespace-pre-wrap">
+                  {summary ? summary : 'No summary available'}
+                  {summary === "" && <div className="text-yellow-600 mt-2">Summary is empty - try asking a few questions to generate a summary</div>}
+                </div>
+                <div className="mt-2 text-right">
+                  <button 
+                    onClick={() => {
+                      if (apiUrl) generateSummary(apiUrl);
+                    }}
+                    className="px-4 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-xs font-medium"
+                    disabled={loading || serverStatus !== 'online'}
+                  >
+                    Force Generate Summary
+                  </button>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-medium mb-2 text-gray-700">Memory Attributes</h3>
+                <pre className="bg-gray-50 p-3 rounded-lg overflow-x-auto text-xs text-gray-700 border border-gray-200 min-h-[100px] max-h-[200px]">
+                  {JSON.stringify(memoryAttributes, null, 2) || 'No memory attributes available'}
+                </pre>
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <h3 className="font-medium mb-2 text-gray-700">Chain Attributes</h3>
+              <pre className="bg-gray-50 p-3 rounded-lg overflow-x-auto text-xs text-gray-700 border border-gray-200 max-h-[150px]">
+                {JSON.stringify(chainAttributes, null, 2) || 'No chain attributes available'}
+              </pre>
+            </div>
+            
+            <div className="mt-4">
+              <h3 className="font-medium mb-2 text-gray-700">Chat History</h3>
+              <div className="bg-gray-50 p-3 rounded-lg overflow-x-auto text-sm text-gray-700 border border-gray-200 max-h-[200px]">
+                {history.length > 0 ? (
+                  <ol className="list-decimal pl-5 space-y-2">
+                    {history.map((msg, idx) => (
+                      <li key={idx}>
+                        <span className="font-semibold">{msg.role}:</span> {msg.content.substring(0, 100)}{msg.content.length > 100 ? '...' : ''}
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  'No chat history available'
+                )}
+              </div>
+            </div>
+            
+            {/* Additional Debug Information */}
+            {Object.keys(debugInfo).length > 0 && (
+              <div className="mt-4">
+                <h3 className="font-medium mb-2 text-gray-700 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1 text-yellow-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  System Information
+                </h3>
+                <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 border border-gray-200">
+                  <table className="w-full text-left">
+                    <tbody>
+                      {Object.entries(debugInfo).map(([key, value]) => (
+                        <tr key={key} className="border-b border-gray-200 last:border-0">
+                          <td className="py-2 pr-2 font-medium">{key.replace(/_/g, ' ')}:</td>
+                          <td className="py-2">{value !== null ? String(value) : 'null'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
+            
+            <div className="mt-4 text-right">
+              <button 
+                onClick={() => {
+                  if (apiUrl) resetMemory(apiUrl);
+                }}
+                className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+              >
+                Reset Conversation Memory
+              </button>
+            </div>
           </div>
         )}
-      </div>
-    </main>
+      </main>
+      
+      <footer className="py-4 text-center text-gray-500 text-sm">
+        <p>RAG Chatbot with Memory | Powered by Mistral AI</p>
+      </footer>
+    </div>
   );
 }

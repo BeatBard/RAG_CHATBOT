@@ -1,10 +1,10 @@
 # Use Node.js base image
-FROM node:18
+FROM node:18-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and install dependencies
+# Install dependencies
 COPY package*.json ./
 RUN npm install
 
@@ -17,5 +17,5 @@ RUN npm run build
 # Expose frontend port
 EXPOSE 3000
 
-# Start the app
-CMD ["npm", "start"]
+# Start the app in development mode
+CMD ["npm", "run", "dev"]

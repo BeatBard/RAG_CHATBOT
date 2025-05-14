@@ -1,121 +1,156 @@
-# RAG Chatbot with Memory
+# 🤖 RAG Chatbot with Memory
 
-A Retrieval-Augmented Generation (RAG) chatbot system with conversation memory, document management, and intelligent text processing.
+A modern, intelligent Retrieval-Augmented Generation (RAG) chatbot system with conversation memory, document management, and advanced text processing capabilities.
 
-## Features
+![RAG Chatbot Demo](https://i.imgur.com/example.png)
 
-- **Smart Chunking** - Documents are split into smaller, strategic chunks (400 characters with 50-character overlap) for more precise retrieval
-- **Conversation Memory** - Maintains a summary of the conversation for better context
-- **Multiple Document Support** - Upload and switch between different documents
-- **Context-Aware Responses** - Considers both document content and conversation history when answering
-- **Memory Management** - Ability to view, reset, and maintain conversation memory
-- **Optimized Retrieval** - Uses similarity search to find only the most relevant information (top 3 chunks)
-- **Error Handling** - Gracefully handles API rate limiting, missing files, and other errors
-- **Off-Topic Question Handling** - Properly identifies when it can't answer based on available knowledge
+## ✨ Features
 
-## Architecture
+### Core Features
+- **Smart Document Processing**
+  - Intelligent text chunking (400 characters with 50-character overlap)
+  - Support for multiple document formats (.txt, .md)
+  - Automatic document switching with memory reset
+  - Document management interface
 
-- **Frontend**: Next.js React application
-- **Backend**: FastAPI server with LangChain RAG implementation
-- **Models**: Mistral AI for both embeddings and language model
+- **Advanced Conversation Management**
+  - Persistent conversation memory
+  - Context-aware responses
+  - Conversation history tracking
+  - Memory summary generation
+  - Easy memory reset functionality
 
-## Getting Started
+- **Enhanced Retrieval System**
+  - Optimized similarity search
+  - Top-3 most relevant chunk retrieval
+  - Context-aware answer generation
+  - Off-topic question detection
+
+### Technical Features
+- **Robust Error Handling**
+  - API rate limit management
+  - Graceful error recovery
+  - User-friendly error messages
+  - Automatic retry mechanisms
+
+- **Modern UI/UX**
+  - Responsive design
+  - Real-time status updates
+  - Intuitive document management
+  - Clean and modern interface
+  - Dark/light mode support
+
+## 🏗️ Architecture
+
+### Frontend
+- **Framework**: Next.js 14 with React
+- **Styling**: Tailwind CSS
+- **State Management**: React Hooks
+- **API Integration**: Fetch API with error handling
+
+### Backend
+- **Framework**: FastAPI
+- **RAG Implementation**: LangChain
+- **Language Model**: Mistral AI
+- **Vector Store**: FAISS
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Docker and Docker Compose (for Docker deployment)
+- Docker and Docker Compose (recommended)
 - OR
-- Python 3.9+ for the backend
-- Node.js 18+ for the frontend
+- Python 3.9+
+- Node.js 18+
 - Mistral API key
 
-### Setup and Installation
+### Quick Start with Docker
 
-#### Option 1: Using Docker (Recommended)
-
-1. Clone the repository
-
-2. Create a `.env` file in the root directory:
+1. Clone the repository:
    ```bash
+   git clone https://github.com/yourusername/rag-system.git
    cd rag-system
+   ```
+
+2. Create environment file:
+   ```bash
    echo "MISTRAL_API_KEY=your-api-key-here" > .env
    ```
 
-3. Build and run the Docker containers:
+3. Start the application:
    ```bash
    docker-compose up --build
    ```
 
 4. Access the application at `http://localhost:3000`
 
-5. To stop the containers:
+### Manual Setup
+
+1. Backend Setup:
    ```bash
-   docker-compose down
-   ```
-
-#### Option 2: Manual Setup
-
-1. Clone the repository
-
-2. Setup the backend:
-   ```bash
-   cd rag-system/backend
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # or `venv\Scripts\activate` on Windows
    pip install -r requirements.txt
-   # Create a .env file with your MISTRAL_API_KEY
    echo "MISTRAL_API_KEY=your-api-key-here" > .env
-   ```
-
-3. Setup the frontend:
-   ```bash
-   cd rag-system/frontend
-   npm install
-   ```
-
-4. Running the application:
-   ```bash
-   # Terminal 1 - Backend
-   cd rag-system/backend
    uvicorn main:app --reload --host 0.0.0.0 --port 8000
-   
-   # Terminal 2 - Frontend
-   cd rag-system/frontend
+   ```
+
+2. Frontend Setup:
+   ```bash
+   cd frontend
+   npm install
    npm run dev
    ```
 
-5. Access the application at `http://localhost:3000`
+3. Access the application at `http://localhost:3000`
 
-## Docker Configuration
+## 📚 Usage Guide
 
-The system uses Docker Compose with two services:
+### Document Management
+1. Click "Upload Document" to add new documents
+2. Select a document from the sidebar to make it active
+3. The system will automatically reset memory when switching documents
 
-- **Backend**: FastAPI server running on port 8000
-- **Frontend**: Next.js application with production build running on port 3000
+### Chat Interface
+1. Type your question in the input field
+2. Press Enter or click Send
+3. View the response in the chat window
+4. Use the debug panel to monitor system state
 
-The Docker setup includes:
-- Volume mounting for the backend to enable real-time file changes
-- Environment variable configuration
-- Proper container linking
-- Production-ready frontend build
+### Memory Management
+- View conversation history in the chat window
+- Reset memory using the reset button
+- Monitor memory attributes in the debug panel
 
-## Document Management
+## 🔧 Configuration
 
-The system allows you to:
-- Upload new .txt or .md documents
-- Switch between different documents (automatically resets conversation memory)
-- View the active document being used for answering questions
+### Environment Variables
+- `MISTRAL_API_KEY`: Your Mistral AI API key
+- `CHUNK_SIZE`: Document chunk size (default: 400)
+- `CHUNK_OVERLAP`: Chunk overlap size (default: 50)
+- `TOP_K`: Number of chunks to retrieve (default: 3)
 
-## Memory Management
+### Docker Configuration
+The system uses two services:
+- Backend: FastAPI server (port 8000)
+- Frontend: Next.js application (port 3000)
 
-The system provides robust conversation memory features:
-- View the current conversation summary and history
-- Reset memory when needed (automatically happens when switching documents)
-- Debug conversation memory state
-- Memory persists between sessions
+## 🤝 Contributing
 
-## Implementation Details
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-- RAG implementation uses LangChain with Mistral AI
-- Document processing includes advanced text splitting strategies
-- Conversation memory uses ConversationSummaryMemory for efficient history tracking
-- API calls include automatic retry with exponential backoff for rate limit handling
-- Custom prompt engineering to ensure context awareness 
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Mistral AI for the language model
+- LangChain for the RAG implementation
+- Next.js team for the frontend framework
+- FastAPI team for the backend framework 
