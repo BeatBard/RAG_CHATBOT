@@ -23,6 +23,13 @@ https://github.com/user-attachments/assets/93a29be4-5d9d-4350-8a4f-ed80c82be29f
 - **Backend**: FastAPI, LangChain, Mistral AI, FAISS Vector Store
 - **Memory**: ConversationSummaryMemory for persistent chat context
 
+## 📂 Project Structure
+
+The repository is organized into two main directories:
+
+- **`rag-system/frontend`**: Contains the Next.js 14 frontend application.
+- **`rag-system/backend`**: Contains the FastAPI backend application, including the RAG implementation and API endpoints.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -73,18 +80,38 @@ https://github.com/user-attachments/assets/93a29be4-5d9d-4350-8a4f-ed80c82be29f
 
 ## 📚 Usage Guide
 
-1. **Upload documents** using the upload button
-2. **Select a document** from the sidebar to make it active
-3. **Ask questions** in the chat interface
-4. **View responses** based on the document content
-5. Use the **debug panel** to monitor system state and reset memory if needed
+1. **Upload documents** using the upload button.
+2. **Select a document** from the sidebar to make it active. The conversation memory will be reset.
+3. **Ask questions** in the chat interface.
+4. **View responses** based on the document content.
+5. Use the **debug panel** to monitor the system state and reset the conversation memory if needed.
 
 ## 🔧 Configuration
 
-- `MISTRAL_API_KEY`: Your Mistral AI API key
-- `CHUNK_SIZE`: Document chunk size (default: 400)
-- `CHUNK_OVERLAP`: Chunk overlap size (default: 50)
-- `TOP_K`: Number of chunks to retrieve (default: 3)
+The following environment variables can be set in the `.env` file in the `rag-system` directory:
+
+- `MISTRAL_API_KEY`: Your Mistral AI API key.
+- `CHUNK_SIZE`: The size of the chunks the document is split into (default: 400).
+- `CHUNK_OVERLAP`: The number of overlapping characters between chunks (default: 50).
+- `TOP_K`: The number of chunks to retrieve from the vector store (default: 3).
+
+## 🚢 Deployment
+
+### Vercel (Frontend)
+
+1. Fork the repository.
+2. Go to [Vercel](https://vercel.com/new) and import your forked repository.
+3. Set the "Root Directory" to `rag-system/frontend`.
+4. Add your `NEXT_PUBLIC_API_URL` environment variable, pointing to your deployed backend.
+5. Deploy.
+
+### Heroku (Backend)
+
+1. Fork the repository.
+2. Go to [Heroku](https://dashboard.heroku.com/new?template=https://github.com/yourusername/rag-system) and create a new app.
+3. In the "Deploy" tab, connect your GitHub account and select your forked repository.
+4. In the "Settings" tab, add a `MISTRAL_API_KEY` config var with your API key.
+5. Deploy the app.
 
 ## 📝 License
 
@@ -103,4 +130,4 @@ This project is licensed under the MIT License.
 - Mistral AI for the language model
 - LangChain for the RAG implementation
 - Next.js team for the frontend framework
-- FastAPI team for the backend framework 
+- FastAPI team for the backend framework
